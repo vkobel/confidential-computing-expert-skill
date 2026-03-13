@@ -150,6 +150,33 @@ SignatureProof {
 - **Quote freshness window:** Verifier rejects quotes older than N minutes
 - **Monotonic counters:** If available, include counter in signed data
 
+## Nitro Enclaves Attestation
+
+```
+Client (Enclave)                        Verifier (or KMS)
+    |                                        |
+    |  [Generate attestation doc via NSM     |
+    |   with user_data = nonce/pubkey hash]  |
+    |                                        |
+    |--- Attestation document (COSE Sign1) ->|
+    |                                        |
+    |    [Verify COSE signature              |
+    |     Verify cert chain to AWS root CA   |
+    |     Check PCR0/1/2 against allowlist   |
+    |     Optionally check PCR3 (IAM role)]  |
+    |                                        |
+    |<-- Secret (encrypted to enclave key) --|
+```
+
+### Nitro PCR Pinning Strategy
+- **PCR0 + PCR1 + PCR2:** Full code identity (EIF + kernel + app). Pin all three for strict verification.
+- **PCR2 only:** App identity. Allows kernel updates without re-pinning.
+- **PCR3:** IAM role binding. Use to restrict which AWS accounts/roles can run the enclave.
+- **PCR4:** Instance ID. Rarely pinned (changes per instance), but useful for audit trails.
+
+### AWS KMS Integration
+KMS natively understands Nitro attestation — you can set KMS key policies requiring specific PCR values. The enclave calls `kms:Decrypt` with its attestation document; KMS verifies internally before releasing the key.
+
 ## Common Attestation Mistakes
 
 | Mistake | Impact | Fix |
@@ -161,3 +188,6 @@ SignatureProof {
 | report_data without purpose prefix | Cross-context key confusion | Tag: `"purpose:" \|\| hash` |
 | Skipping CRL check | Revoked platform still trusted | Check Intel CRL |
 | Hardcoded PCK root | Root CA rotation breaks verification | Fetch from Intel PCS, pin fingerprint |
+| Pinning only PCR0 (Nitro) | Can't distinguish kernel/app changes | Pin PCR0 + PCR1 + PCR2 |
+| Not verifying Nitro root CA | Forged attestation docs accepted | Validate cert chain to AWS Nitro root CA |
+| Secrets in EIF/container image | Keys extractable from ramdisk cpio | Fetch secrets at runtime via KMS after attestation |

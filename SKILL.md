@@ -1,6 +1,6 @@
 ---
 name: confidential-computing-expert
-description: Use when working with TEEs (Intel TDX, AMD SEV-SNP), attestation protocols, confidential VMs, measurement chains, or cloud TEE deployments (Azure, GCP, AWS). Also use when reviewing security of TEE-based systems, implementing attestation flows, or answering questions about hardware-rooted trust.
+description: Use when working with TEEs (Intel TDX, AMD SEV-SNP, AWS Nitro Enclaves), attestation protocols, confidential VMs, measurement chains, or cloud TEE deployments (Azure, GCP, AWS). Also use when reviewing security of TEE-based systems, implementing attestation flows, or answering questions about hardware-rooted trust.
 ---
 
 # Confidential Computing Expert
@@ -11,7 +11,7 @@ Domain expertise for TEE-based systems: hardware isolation, attestation, measure
 
 | Question domain | Read |
 |----------------|------|
-| TDX/SEV-SNP hardware, measurement registers, key derivation, trust model | `tee-fundamentals.md` |
+| TDX/SEV-SNP/Nitro hardware, measurement registers, key derivation, trust model | `tee-fundamentals.md` |
 | Azure vs GCP vs AWS tradeoffs, platform gotchas, ecosystem tooling | `cloud-tee-comparison.md` |
 | RCAR protocol, Trustee KBS, PCK verification, proof chains, HCL envelope | `attestation-protocols.md` |
 | Threat modeling, security layers, auditor verification, hardening | `threat-model-patterns.md` |
@@ -40,3 +40,6 @@ Load the relevant reference file(s) before answering. For cross-cutting question
 | HCL | Host Compatibility Layer (Azure paravisor binding vTPM to TDX) |
 | TCB | Trusted Computing Base (what you must trust) |
 | SVN | Security Version Number (for downgrade prevention) |
+| EIF | Enclave Image File (AWS Nitro Enclaves bootable image) |
+| NSM | Nitro Security Module (Nitro Enclaves attestation device) |
+| PCR[0-4] | Nitro Enclaves platform configuration registers (EIF, kernel, app, IAM, instance) |

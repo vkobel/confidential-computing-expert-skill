@@ -26,6 +26,34 @@
 - **Root of trust:** AMD Root Key (ARK) -> SEV Signing Key (ASK) -> VCEK (per-chip)
 - **Key fields:** `report_data` (64 bytes), `host_data` (32 bytes)
 
+### AWS Nitro Enclaves
+- **Isolation unit:** Enclave VM (carved from parent EC2 instance)
+- **Not silicon-TEE:** Hypervisor-based isolation (Nitro Hypervisor), not CPU memory encryption
+- **Measurement registers (PCRs):**
+  - **PCR0**: Enclave Image File (EIF) hash
+  - **PCR1**: Linux kernel and bootstrap hash
+  - **PCR2**: Application code hash
+  - **PCR3**: IAM role of parent instance
+  - **PCR4**: Instance ID of parent instance
+- **No runtime extension** — PCRs are fixed at enclave boot
+- **Attestation:** NSM (Nitro Security Module) device at `/dev/nsm`
+- **Root of trust:** AWS Nitro Attestation PKI (root CA published by AWS)
+- **Evidence format:** CBOR-encoded attestation document (COSE Sign1)
+- **Key fields:** `user_data` (512 bytes), `nonce` (512 bytes), `public_key` (1024 bytes)
+- **No persistent storage or network** — all I/O via vsock to parent instance
+- **Critical difference from CVMs:** Parent instance is NOT in the TCB but controls all enclave I/O
+
+### Nitro vs CVM Comparison
+| Aspect | Nitro Enclaves | TDX/SEV-SNP CVMs |
+|--------|---------------|------------------|
+| Isolation | Hypervisor-based | CPU memory encryption |
+| Network | None (vsock only) | Full network stack |
+| Storage | None (stateless) | Full disk (encrypted) |
+| Measurement | 5 PCRs (fixed) | MRTD + 4 RTMRs (TDX) or 1 MEASUREMENT (SNP) |
+| Runtime extend | No | Yes (RTMR3 on TDX) |
+| I/O trust | Parent controls all I/O | Guest has direct I/O |
+| Hardware root | Nitro Hypervisor | CPU silicon |
+
 ## Measurement Chain (Generic Pattern)
 
 ```

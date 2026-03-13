@@ -2,16 +2,21 @@
 
 ## Security Layer Framework
 
-Based on Blue Throat Labs TEE Security Handbook classification:
+Based on Blue Throat Labs TEE Security Handbook classification (adapted):
 
 | Layer | Description | Requirements |
 |-------|-------------|--------------|
-| **Layer 1** | TEE only | Hardware isolation, no attestation |
+| **Layer 1** | TEE only | Hardware isolation, no attestation (**never production**) |
 | **Layer 2** | TEE + correct attestation | RCAR, measurement verification, PCK chain |
 | **Layer 3** | TEE + attestation + constant-time crypto | Side-channel resistant operations |
-| **Layer 4** | TEE + attestation + constant-time + formal verification | Highest assurance |
+| **Layer 4** | TEE + MPC/threshold keys | M-of-N key splitting across TEE nodes |
+| **Layer 5** | TEE + MPC + ZK proofs | Independent verification without TEE trust |
 
-Most production systems target Layer 2-3. Layer 4 is research territory.
+Most production systems target Layer 2-3. Layer 4+ for high-value custody (bridges, validator keys).
+
+**Hybrid architecture:** Different operations can target different layers (e.g., key mgmt at L4, tx execution at L3, public queries at L2). Clear security boundaries required — operations must not leak data across layers.
+
+**Note:** BTL's handbook also defines Layer 6 (+ economic incentives / "Sting Framework") — speculative, not yet production-proven.
 
 ## Common TEE Threats
 
@@ -72,6 +77,23 @@ Most production systems target Layer 2-3. Layer 4 is research territory.
 **Impact:** No domain separation; keys from different contexts may collide
 **Mitigation:** HKDF-SHA256 with context binding (purpose, algorithm, version)
 
+### T13: IPC/vsock Channel Trust
+**Threat:** Treating enclave I/O channels (vsock, virtio) as trusted because payload is encrypted
+**Impact:** Host intercepts, replays, reorders, or delays messages; injects crafted inputs
+**Mitigation:** Authenticate every message entering the TEE; use sequence numbers + MACs; implement timeouts on all reads
+**Especially critical for:** Nitro Enclaves (vsock is the only I/O path; parent controls everything)
+
+### T14: Traffic Analysis / Metadata Leakage
+**Threat:** Packet sizes, timing patterns, and connection counts leak operation semantics even with encrypted payloads
+**Impact:** Attacker infers trade sizes, transaction types, or bid values from metadata alone
+**Mitigation:** Constant-size request/response padding; constant-time processing; random delays; batch processing
+**Note:** Generic error responses (T4) are necessary but insufficient — timing and size patterns are separate channels
+
+### T15: Secrets Embedded in Images
+**Threat:** Private keys or seeds hardcoded in container images, EIF files, or VM disk images
+**Impact:** Anyone with image access extracts keys (EIF ramdisk is a known-structure cpio archive)
+**Mitigation:** Never embed secrets in images; retrieve at runtime from KMS/KBS after attestation; use ephemeral key derivation inside TEE
+
 ## Trust Assumptions (Document These Explicitly)
 
 Every TEE deployment rests on assumptions. Document yours:
@@ -104,6 +126,7 @@ What an independent auditor can verify end-to-end:
 | Azure TDX | Binary matches source | OpenHCL build is opaque |
 | GCP TDX | Source code | Google OVMF is closed |
 | AWS SEV-SNP | Guest image construction | Image tool is closed |
+| AWS Nitro | Hypervisor integrity | Nitro Hypervisor is closed; trust AWS hardware root |
 
 **This is the fundamental limitation of cloud TEEs.** No platform provides full source-to-measurement verifiability. Cross-platform deployment mitigates by placing the trust gap in different parts of the chain.
 
@@ -121,3 +144,7 @@ What an independent auditor can verify end-to-end:
 - [ ] Generic error responses (no stack traces, no secret material)
 - [ ] Constant-time crypto for secret operations
 - [ ] Attestation freshness window
+- [ ] No secrets in container images / EIF files
+- [ ] vsock/IPC messages authenticated with sequence numbers (Nitro)
+- [ ] Constant-size padding on sensitive request/response channels
+- [ ] Read timeouts on all enclave I/O operations
