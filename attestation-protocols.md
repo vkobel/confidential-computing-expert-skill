@@ -72,6 +72,8 @@ Intel Root CA (hardcoded, self-signed)
 5. Verify quote signature using PCK public key
 6. Extract and validate report body (MRTD, RTMRs, report_data)
 
+Common errors: "DCAP verification failed", "quote signature invalid", "PCK certificate expired", "PCK certificate revoked", "TCB level not supported". See Common Attestation Mistakes table below.
+
 ### TCB Recovery / SVN Checking
 - Each TDX component has a Security Version Number (SVN)
 - Quote contains `tee_tcb_svn` — array of component SVNs
@@ -183,10 +185,10 @@ KMS natively understands Nitro attestation — you can set KMS key policies requ
 |---------|--------|-----|
 | Not checking debug attribute | Attestation meaningless (host can read TD) | Check `td_attributes[0] & 0x01 == 0` |
 | Trusting MRTD alone | Missing runtime tampering | Also verify RTMRs / PCRs |
-| No SVN minimum | Downgrade to vulnerable TCB | Enforce minimum `tee_tcb_svn` |
+| No SVN minimum | Downgrade to vulnerable TCB — may surface as "TCB level not supported" | Enforce minimum `tee_tcb_svn` |
 | Raw SHA-256 for key derivation | No domain separation | Use HKDF with context |
 | report_data without purpose prefix | Cross-context key confusion | Tag: `"purpose:" \|\| hash` |
-| Skipping CRL check | Revoked platform still trusted | Check Intel CRL |
+| Skipping CRL check | Revoked platform still trusted — triggers "PCK certificate expired" or "PCK certificate revoked" | Check Intel CRL |
 | Hardcoded PCK root | Root CA rotation breaks verification | Fetch from Intel PCS, pin fingerprint |
 | Pinning only PCR0 (Nitro) | Can't distinguish kernel/app changes | Pin PCR0 + PCR1 + PCR2 |
 | Not verifying Nitro root CA | Forged attestation docs accepted | Validate cert chain to AWS Nitro root CA |

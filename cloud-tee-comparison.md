@@ -99,14 +99,14 @@ Returns: { verified: bool, parsed fields... }
 
 ### Azure TDX
 - No raw `/dev/tdx_guest` — must use `az-tdx-vtpm` crate
-- Composite evidence format requires custom parsing (not standard DCAP)
+- Composite evidence format requires custom parsing (not standard DCAP) — "DCAP verification failed" usually means you're parsing Azure composite evidence as raw DCAP
 - RTMR3 guest extension availability unknown — verify on real hardware
 - `az-tdx-vtpm` wraps vTPM PCR extension, not raw RTMR
 
 ### GCP TDX
 - Standard `configfs-tsm` interface for quotes
 - RTMR3 extensible via `sysfs` or direct `ioctl`
-- Quote verification via `gce-tcb-verifier` endorsement chain
+- Quote verification via `gce-tcb-verifier` endorsement chain — "quote signature invalid" often means stale collateral; refresh from Intel PCS
 - C3 instance type required for TDX
 
 ### AWS SEV-SNP

@@ -1,11 +1,15 @@
 ---
 name: confidential-computing-expert
-description: Use when working with TEEs (Intel TDX, AMD SEV-SNP, AWS Nitro Enclaves), attestation protocols, confidential VMs, measurement chains, or cloud TEE deployments (Azure, GCP, AWS). Also use when reviewing security of TEE-based systems, implementing attestation flows, or answering questions about hardware-rooted trust.
+description: Use when working with TEEs (Intel TDX, AMD SEV-SNP, AWS Nitro Enclaves), attestation protocols, confidential VMs, measurement chains, cloud TEE deployments (Azure, GCP, AWS), or debugging quote verification failures.
 ---
 
 # Confidential Computing Expert
 
 Domain expertise for TEE-based systems: hardware isolation, attestation, measurement chains, and cloud confidential VM deployments.
+
+## Scope
+Covers hardware TEEs and cloud confidential computing.
+NOT for: general cryptography, standard VM security, HSMs, or SGX enclaves.
 
 ## Reference Routing
 
@@ -25,6 +29,12 @@ Load the relevant reference file(s) before answering. For cross-cutting question
 3. **Debug mode = no security** — always reject quotes with debug attribute set.
 4. **HKDF over raw hashing** — domain separation prevents cross-context key collisions.
 5. **Cross-platform reduces risk** — different platforms have gaps in different places.
+
+## Top Mistakes
+- Confusing Nitro PCRs with vTPM PCRs or TDX RTMRs (different semantics)
+- Accepting debug-mode quotes in production
+- Pinning only one measurement register (MRTD/PCR0) and ignoring the rest
+- Embedding secrets in container/EIF images instead of fetching via KMS after attestation
 
 ## Quick Terminology
 
